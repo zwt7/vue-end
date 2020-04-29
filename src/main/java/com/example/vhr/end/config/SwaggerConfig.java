@@ -5,6 +5,7 @@ import lombok.Data;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -57,4 +58,5 @@ public class SwaggerConfig {
                 .termsOfServiceUrl(termsOfServiceUrl).version(version)
                 .license(license).licenseUrl(licenseUrl).contact(contact).build();
     }
+
 }

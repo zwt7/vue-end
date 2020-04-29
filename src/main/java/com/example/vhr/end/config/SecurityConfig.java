@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -44,6 +45,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(AuthenticationManagerBuilder auth) throws Exception{
 //        使用内存进行身份认证
        auth.userDetailsService(hrService);
+    }
+    // 不拦截 login
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring()
+                .antMatchers("/swagger-ui.html")
+                .antMatchers("/v2/*")
+                .antMatchers("/swagger-resources/**")
+                .antMatchers("/webjars/**")
+                .mvcMatchers("/login");
     }
 //    自定义用户访问控制
     @Override
@@ -126,4 +137,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf().disable();  //关闭防csrf攻击，用于postman测试
     }
+
 }

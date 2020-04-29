@@ -1,5 +1,7 @@
 package com.example.vhr.end.model;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -10,16 +12,23 @@ import java.util.List;
  * @author 
  */
 @Data
+@ApiModel(value = "菜单实体类",description = "用户菜单描述")
 public class Menu implements Serializable {
+
     private Integer id;
+
 
     private String url;
 
+
     private String path;
+
 
     private String component;
 
+
     private String name;
+
 
     private String iconCls;
 

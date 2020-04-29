@@ -1,11 +1,16 @@
 package com.example.vhr.end.model;
 
+import io.swagger.annotations.ApiModel;
+import lombok.Data;
+
 import java.io.Serializable;
 
 /**
  * role
  * @author 
  */
+@Data
+@ApiModel(value = "角色名称实体类")
 public class Role implements Serializable {
     private Integer id;
 
@@ -17,28 +22,4 @@ public class Role implements Serializable {
     private String namezh;
 
     private static final long serialVersionUID = 1L;
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getNamezh() {
-        return namezh;
-    }
-
-    public void setNamezh(String namezh) {
-        this.namezh = namezh;
-    }
 }

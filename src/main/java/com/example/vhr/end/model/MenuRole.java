@@ -1,5 +1,7 @@
 package com.example.vhr.end.model;
 
+import org.springframework.web.bind.annotation.RestController;
+
 import java.io.Serializable;
 
 /**
