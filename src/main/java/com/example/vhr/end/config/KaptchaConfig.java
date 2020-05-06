@@ -1,5 +1,7 @@
 package com.example.vhr.end.config;
 
+
+
 import com.google.code.kaptcha.Constants;
 import com.google.code.kaptcha.impl.DefaultKaptcha;
 import com.google.code.kaptcha.util.Config;
