@@ -2,6 +2,8 @@ package com.example.vhr.end.service.system.basic;
 
 import com.example.vhr.end.mapper.PositionMapper;
 import com.example.vhr.end.model.Position;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -19,7 +21,13 @@ public class PositionService {
     PositionMapper positionMapper;
 
     public List<Position> getAllPosition(){
-        return positionMapper.selectAllposition();
+       return positionMapper.selectAllposition();
+    }
+
+    public PageInfo<Position> getPositionByPage(Integer page, Integer size){
+        PageHelper.startPage(page,size);
+        List<Position> positions=positionMapper.selectAllposition();
+        return new PageInfo<>(positions,size);
     }
 
     public Integer addPosition(Position position){
@@ -37,5 +45,9 @@ public class PositionService {
 
     public Integer deletePosition(Integer[] ids){
         return positionMapper.deleteByIds(ids);
+    }
+
+    public int addPositions(List<Position> positions){
+        return positionMapper.batchInsert(positions);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.vhr.end.config;
 
+import com.example.vhr.end.filter.LoginFilter;
 import com.example.vhr.end.model.Hr;
 import com.example.vhr.end.model.RespBean;
 import com.example.vhr.end.service.HrService;
@@ -18,8 +19,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
+import javax.servlet.Filter;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -54,69 +57,117 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/v2/*")
                 .antMatchers("/swagger-resources/**")
                 .antMatchers("/webjars/**")
+                .antMatchers("verifyCode")
                 .mvcMatchers("/login");
+    }
+    //登录验证
+    @Bean
+    LoginFilter login() throws  Exception{
+        LoginFilter loginFilter=new LoginFilter();
+        loginFilter.setAuthenticationSuccessHandler(new AuthenticationSuccessHandler() {
+            @Override
+            public void onAuthenticationSuccess(HttpServletRequest Request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+                response.setContentType("application/json;charset=utf-8");
+                PrintWriter out=response.getWriter();
+                Hr hr= (Hr) authentication.getPrincipal();
+                hr.setPassword("");
+                RespBean ok=RespBean.ok("登录成功",hr);
+                out.write(new ObjectMapper().writeValueAsString(ok));
+                out.flush();
+                out.close();
+            }
+        });
+        loginFilter.setAuthenticationFailureHandler(new AuthenticationFailureHandler() {
+            @Override
+            public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException e) throws IOException, ServletException {
+                response.setContentType("application/json;charset=utf-8");
+                PrintWriter out=response.getWriter();
+                RespBean respBean=RespBean.error("登录失败");
+                if(e instanceof LockedException){
+                    respBean.setMsg("账户被锁定,请联系管理员");
+                }
+                else if(e instanceof BadCredentialsException){
+                    respBean.setMsg("用户名或密码错误，登录失败");
+                } else if(e instanceof DisabledException){
+                    respBean.setMsg("账户被禁用，登录失败");
+                }else if(e instanceof AccountExpiredException){
+                    respBean.setMsg("账户过期，登录失败");
+                }else if(e instanceof CredentialsExpiredException){
+                    respBean.setMsg("密码过期，登录失败");
+                }
+                else{
+                    respBean.setMsg("未知错误");
+                }
+                out.write(new ObjectMapper().writeValueAsString(respBean));
+                out.flush();
+                out.close();
+            }
+        });
+        loginFilter.setAuthenticationManager(authenticationManagerBean());
+        loginFilter.setFilterProcessesUrl("/doLogin");
+        return loginFilter;
     }
 //    自定义用户访问控制
     @Override
     protected void configure(HttpSecurity http) throws Exception{
-        http.authorizeRequests()  //开启基于HttpServletRequest请求访问得限制
+        http.addFilterAt(login(), UsernamePasswordAuthenticationFilter.class).authorizeRequests()  //开启基于HttpServletRequest请求访问得限制
 //                .antMatchers("/dba/**").hasRole("dba")
 //                .antMatchers("/admin/**").hasRole("admin")
 //                .antMatchers("/user/**").hasAnyRole("admin","user")
-                .anyRequest().authenticated()  //其他请求登录之后都能访问
-                .and()
-                .formLogin()                               //表单登录
-                .usernameParameter("username")     //这个是用于你想设置的名字，如果，你就是想要
-                .passwordParameter("password")     //username和password就可以省略这两句话
-                .loginProcessingUrl("/doLogin")
-                .loginPage("/login")
-                .successHandler(new AuthenticationSuccessHandler() {
-                    @Override
-                    public void onAuthenticationSuccess(HttpServletRequest request,
-                                                        HttpServletResponse response,
-                                                        Authentication authentication)
-                            throws IOException, ServletException {
-                        response.setContentType("application/json;charset=utf-8");
-                        PrintWriter out=response.getWriter();
-                        Hr hr= (Hr) authentication.getPrincipal();
-                        hr.setPassword("");
-                        RespBean ok=RespBean.ok("登录成功",hr);
-                        out.write(new ObjectMapper().writeValueAsString(ok));
-                        out.flush();
-                        out.close();
-
-                    }
-                })
-                .failureHandler(new AuthenticationFailureHandler() {
-                    @Override
-                    public void onAuthenticationFailure(HttpServletRequest request,
-                                                        HttpServletResponse response,
-                                                        AuthenticationException e)
-                            throws IOException, ServletException {
-                        response.setContentType("application/json;charset=utf-8");
-                        PrintWriter out=response.getWriter();
-                        RespBean respBean=RespBean.error("登录失败");
-                        if(e instanceof LockedException){
-                            respBean.setMsg("账户被锁定,请联系管理员");
-                        }
-                        else if(e instanceof BadCredentialsException){
-                            respBean.setMsg("用户名或密码错误，登录失败");
-                        } else if(e instanceof DisabledException){
-                            respBean.setMsg("账户被禁用，登录失败");
-                        }else if(e instanceof AccountExpiredException){
-                            respBean.setMsg("账户过期，登录失败");
-                        }else if(e instanceof CredentialsExpiredException){
-                            respBean.setMsg("密码过期，登录失败");
-                        }
-                        else{
-                            respBean.setMsg("未知错误");
-                        }
-                        out.write(new ObjectMapper().writeValueAsString(respBean));
-                        out.flush();
-                        out.close();
-                    }
-                })
-                .permitAll()          //与登录相关的请求直接通过
+//                .anyRequest().authenticated()  //其他请求登录之后都能访问
+//                .and()
+//                .formLogin()                               //表单登录
+//                .usernameParameter("username")     //这个是用于你想设置的名字，如果，你就是想要
+//                .passwordParameter("password")     //username和password就可以省略这两句话
+//                .loginProcessingUrl("/doLogin")
+//                .loginPage("/login")
+//                .successHandler(new AuthenticationSuccessHandler() {
+//                    @Override
+//                    public void onAuthenticationSuccess(HttpServletRequest request,
+//                                                        HttpServletResponse response,
+//                                                        Authentication authentication)
+//                            throws IOException, ServletException {
+//                        response.setContentType("application/json;charset=utf-8");
+//                        PrintWriter out=response.getWriter();
+//                        Hr hr= (Hr) authentication.getPrincipal();
+//                        hr.setPassword("");
+//                        RespBean ok=RespBean.ok("登录成功",hr);
+//                        out.write(new ObjectMapper().writeValueAsString(ok));
+//                        out.flush();
+//                        out.close();
+//
+//                    }
+//                })
+//                .failureHandler(new AuthenticationFailureHandler() {
+//                    @Override
+//                    public void onAuthenticationFailure(HttpServletRequest request,
+//                                                        HttpServletResponse response,
+//                                                        AuthenticationException e)
+//                            throws IOException, ServletException {
+//                        response.setContentType("application/json;charset=utf-8");
+//                        PrintWriter out=response.getWriter();
+//                        RespBean respBean=RespBean.error("登录失败");
+//                        if(e instanceof LockedException){
+//                            respBean.setMsg("账户被锁定,请联系管理员");
+//                        }
+//                        else if(e instanceof BadCredentialsException){
+//                            respBean.setMsg("用户名或密码错误，登录失败");
+//                        } else if(e instanceof DisabledException){
+//                            respBean.setMsg("账户被禁用，登录失败");
+//                        }else if(e instanceof AccountExpiredException){
+//                            respBean.setMsg("账户过期，登录失败");
+//                        }else if(e instanceof CredentialsExpiredException){
+//                            respBean.setMsg("密码过期，登录失败");
+//                        }
+//                        else{
+//                            respBean.setMsg("未知错误");
+//                        }
+//                        out.write(new ObjectMapper().writeValueAsString(respBean));
+//                        out.flush();
+//                        out.close();
+//                    }
+//                })
+//                .permitAll()          //与登录相关的请求直接通过
                 .and()
                 .logout()
                 .logoutUrl("/logout")
